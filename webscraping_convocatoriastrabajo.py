@@ -77,83 +77,91 @@ def scraping_ofertas(con, url_principal, prefix_url, sufix_url, pagina_inicial, 
             # Almacena la url de la oferta
             oferta["url"] = link
 
-            # Almacena el puesto de la oferta
-            oferta["puesto"] = el.find("h3").find("a").get_text()
+            redundancia = controller.evitar_redundancia(con, oferta)
 
-            infoEmpresa = el.find({"div": "puesto-cont"}
-                                  ).find({"div": "puesto-det"}).find_all("p")
+            if(redundancia is None):
+                print("Registro nuevo")
 
-            # Almacena el nombre de la empresa de la oferta
-            if infoEmpresa[0] != None:
-                oferta["empresa"] = infoEmpresa[0].get_text()
-            else:
-                oferta["empresa"] = ''
+                # Almacena el puesto de la oferta
+                oferta["puesto"] = el.find("h3").find("a").get_text()
 
-            lugar = infoEmpresa[1].get_text()
-            lugarK = lugar.split("   ")
+                infoEmpresa = el.find({"div": "puesto-cont"}
+                                      ).find({"div": "puesto-det"}).find_all("p")
 
-            # Almacena el lugar de la oferta
-            if lugarK != None:
-                oferta["lugar"] = lugarK[0]
-            else:
-                oferta["lugar"] = ''
+                # Almacena el nombre de la empresa de la oferta
+                if infoEmpresa[0] != None:
+                    oferta["empresa"] = infoEmpresa[0].get_text()
+                else:
+                    oferta["empresa"] = ''
 
-            salario = lugarK[1]
-            if salario != None:
-                oferta["salario"] = salario
-            else:
-                oferta["salario"] = ''
+                lugar = infoEmpresa[1].get_text()
+                lugarK = lugar.split("   ")
 
-            # Accede al contenido HTML del detalle de la oferta
-            reqDeta = requests.get(oferta["url"])
-            soup_deta = BeautifulSoup(reqDeta.text, "lxml")
+                # Almacena el lugar de la oferta
+                if lugarK != None:
+                    oferta["lugar"] = lugarK[0]
+                else:
+                    oferta["lugar"] = ''
 
-            # LIMITAMOS EL SCRAPING SOLO AL CONTENIDO QUE SE DESEA
-            aviso_deta = soup_deta.find({"article", "oferta"}).get_text()
+                salario = lugarK[1]
+                if salario != None:
+                    oferta["salario"] = salario
+                else:
+                    oferta["salario"] = ''
 
-            if aviso_deta != None:
-                oferta["detalle"] = aviso_deta
-            # print("-----  IMPRIMIENTO AVISO_DETA------")
-            # print(aviso_deta)
+                # Accede al contenido HTML del detalle de la oferta
+                reqDeta = requests.get(oferta["url"])
+                soup_deta = BeautifulSoup(reqDeta.text, "lxml")
 
-            # print("-------------------------------------------------------------------")
-            # print("-------------------------OFERTA HASTA AHORA------------------------")
-            # print(oferta)
+                # LIMITAMOS EL SCRAPING SOLO AL CONTENIDO QUE SE DESEA
+                aviso_deta = soup_deta.find({"article", "oferta"}).get_text()
 
-            # Se agrega la oferta a la lista de ofertas
-            lista_oferta.append(oferta)
+                if aviso_deta != None:
+                    oferta["detalle"] = aviso_deta
+                # print("-----  IMPRIMIENTO AVISO_DETA------")
+                # print(aviso_deta)
 
-            # print("-------------------------------------------------------------------")
-            # Se registra la oferta en la base de datos.
-            id_Oferta = controller.registrar_oferta(con, oferta)
-            print("\nid de la oferta: ", id_Oferta)
+                # print("-------------------------------------------------------------------")
+                # print("-------------------------OFERTA HASTA AHORA------------------------")
+                # print(oferta)
 
-            # print("-------------------------------------------------------------------")
-            # Se guarda linea por linea la informacion de la oferta
-            arreglo = str(aviso_deta).splitlines()
+                # Se agrega la oferta a la lista de ofertas
+                lista_oferta.append(oferta)
 
-            # Se limpia la informacion obtenida
-            # print("---------------------DESPUES DE TRATAR------------------------------")
-            for k in arreglo:
-                if arreglo.count(k) > 1:
-                    arreglo.pop(arreglo.index(k))
-            arreglo.remove('')
-            tamanio = len(arreglo)
-            k = 0
-            while k <= 6:
+                # print("-------------------------------------------------------------------")
+                # Se registra la oferta en la base de datos.
+                id_Oferta = controller.registrar_oferta(con, oferta)
+                print("\nid de la oferta: ", id_Oferta)
+
+                # print("-------------------------------------------------------------------")
+                # Se guarda linea por linea la informacion de la oferta
+                arreglo = str(aviso_deta).splitlines()
+
+                # Se limpia la informacion obtenida
+                # print("---------------------DESPUES DE TRATAR------------------------------")
+                for k in arreglo:
+                    if arreglo.count(k) > 1:
+                        arreglo.pop(arreglo.index(k))
+                arreglo.remove('')
                 tamanio = len(arreglo)
-                arreglo.pop(tamanio-1)
-                k = k+1
-            # print(arreglo)
+                k = 0
+                while k <= 6:
+                    tamanio = len(arreglo)
+                    arreglo.pop(tamanio-1)
+                    k = k+1
+                # print(arreglo)
 
-            tuplas = []
-            for elemento in arreglo:
-                detalle = {}
-                detalle["id_oferta"] = id_Oferta
-                detalle["descripcion"] = elemento
-                tuplas.append(detalle)
+                tuplas = []
+                for elemento in arreglo:
+                    detalle = {}
+                    detalle["id_oferta"] = id_Oferta
+                    detalle["descripcion"] = elemento
+                    tuplas.append(detalle)
 
-            controller.registrar_detalle_oferta(con, tuplas)
+                controller.registrar_detalle_oferta(con, tuplas)
+
+            else:
+                print("Registro redundante")
 
     return lista_oferta
 

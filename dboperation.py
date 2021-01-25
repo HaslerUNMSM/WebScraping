@@ -62,6 +62,28 @@ class DBOferta:
 
         return row_id
 
+    def evitar_redundancia(self, connection, oferta):
+        try:
+            mydb = connection.connect()
+            cur = mydb.cursor()
+            row = None
+            sql = "SELECT * FROM OFERTA WHERE ID_ANUNCIOEMPLEO = '" + \
+                oferta["id_anuncioempleo"] + "' LIMIT 1;"
+            # print(sql)
+            cur.execute(sql)
+            row = cur.fetchone()
+
+            # close the communication with the PostgreSQL
+            cur.close()
+            mydb.close()
+
+        except (Exception, psycopg2.DatabaseError) as error:
+            print("-------------Exception, psycopg2.DatabaseError-------------------")
+            print(error)
+            mydb.close()
+
+        return row
+
 
 class DBOfertadetalle:
     def __init__(self):

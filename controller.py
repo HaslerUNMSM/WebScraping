@@ -17,23 +17,25 @@ class Controller:
         id = self.dbwebscraping.insert_webscraping(con, webscraping)
         return id
 
-    def registrar_oferta(self, con, oferta):        
+    def registrar_oferta(self, con, oferta):
         return self.dboferta.insert_oferta(con, oferta)
 
-    ##metodo añadido para insertar las tuplas del detalle de la oferta
+    # metodo añadido para insertar las tuplas del detalle de la oferta
     def registrar_detalle_oferta(self, con, listaDetalle):
-        #print(listaDetalle)
+        # print(listaDetalle)
         for detalle in listaDetalle:
             print("----------------analizando el detalle en tuplas---------------------")
             print(detalle)
-            idOfertaDetalle=self.dbofertadetalle.insertOfertaDetalle(con, detalle)            
+            idOfertaDetalle = self.dbofertadetalle.insertOfertaDetalle(
+                con, detalle)
 
     def registrar_ofertas(self, con, lista_oferta):
         print(len(lista_oferta))
         for oferta in lista_oferta:
-            print("----------------analizando que hay en lista oferta---------------------")
+            print(
+                "----------------analizando que hay en lista oferta---------------------")
             print(oferta)
-            idPuesto = self.dboferta.insert_oferta(con, oferta)     
+            idPuesto = self.dboferta.insert_oferta(con, oferta)
 
     def generar_insert_ofertadetalle(self, oferta):
         sql_insert = "INSERT INTO OFERTA_DETALLE (id_oferta,descripcion,fecha_creacion,fecha_modificacion) VALUES (%s,'%s',sysdate,sysdate);"
@@ -45,22 +47,27 @@ class Controller:
 
     def registrar_normalizado(self, con, lista):
         for element in lista:
-            new_words = preprocessing.normalize_words(word_tokenize(element["descripcion"]))
+            new_words = preprocessing.normalize_words(
+                word_tokenize(element["descripcion"]))
             descripcion_normalizada = " ".join(new_words)
             element["descripcion_normalizada"] = descripcion_normalizada
         # DBOfertadetalle.update_requisito(con, element)
 
-    #prepara descripcion en una lista de diccionarios para el insert en oferta_detalle
-    def analizaSegundoLi(self,tuplas, row):
-        tuplafinal=[]
-        avisotupla=str(tuplas).replace("<li>","").replace("</li>","").split("<br/>")
+    # prepara descripcion en una lista de diccionarios para el insert en oferta_detalle
+    def analizaSegundoLi(self, tuplas, row):
+        tuplafinal = []
+        avisotupla = str(tuplas).replace(
+            "<li>", "").replace("</li>", "").split("<br/>")
         for aviso in avisotupla:
-            a={}
+            a = {}
             if aviso.strip():
-                a["id_oferta"]= row
-                a["descripcion"]=aviso.strip()
+                a["id_oferta"] = row
+                a["descripcion"] = aviso.strip()
                 tuplafinal.append(a)
         return tuplafinal
 
     def getwords(self, conn):
         return self.dbkeyword.getwords(conn)
+
+    def evitar_redundancia(self, con, oferta):
+        return self.dboferta.evitar_redundancia(con, oferta)
